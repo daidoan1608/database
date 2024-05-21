@@ -60,7 +60,7 @@ SELECT
     MAX(duration),
     AVG(duration)
 FROM exam;
--- Mệnh đề GROUP BY
+-- Mệnh đề GROUP BY nhóm
 SELECT duration,COUNT(exam_id) AS exam_count
 FROM exam
 GROUP BY duration;
@@ -78,7 +78,6 @@ ORDER BY duration, created_date;
 UPDATE department
 SET department_name = "Phòng chờ"
 WHERE department_id = 1;
--- DELETE
 -- DELETE
 DELETE FROM exam
 WHERE duration IS NULL;
