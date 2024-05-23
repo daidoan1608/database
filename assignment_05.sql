@@ -240,12 +240,28 @@ VALUES           (1     , 1   ),
               (9     , 2   ),
               (10     , 10 );
 -- Question 1: Tạo view có chứa danh sách nhân viên thuộc phòng ban sale
+DROP VIEW IF EXISTS view_01;
+CREATE OR REPLACE VIEW view_01 AS
 SELECT *
 FROM account
 WHERE department_id =(SELECT department_id
 					FROM department
-					WHERE department_name = "Sale");
+					WHERE department_name = "Sale");view_01
+                    
+-- Cách 2: Dùng CTE
+WITH c2 AS(
+	SELECT department_id
+	FROM department
+	WHERE department_name = "Sale"
+)
+SELECT *
+FROM account
+WHERE department_id = (	SELECT *
+						FROM c2);
+                        
 -- Question 2: Tạo view có chứa thông tin các account tham gia vào nhiều group nhất
+DROP VIEW IF EXISTS view_02;
+CREATE OR REPLACE VIEW view_02 AS
 SELECT account.*
 FROM account
 LEFT JOIN group_account USING(account_id)
@@ -255,6 +271,8 @@ HAVING COUNT(group_id)= (	SELECT MAX(group_count)
 										FROM account
 										LEFT JOIN group_account USING(account_id)
 										GROUP BY account_id) AS t);
+                                        
+-- Cách 2 dùng CTE
 WITH c1 AS(
 	SELECT account.*, COUNT(group_id) AS group_count
 	FROM account
@@ -268,6 +286,8 @@ WHERE group_count =	(SELECT MAX(group_count)
 -- Question 3: Tạo view có chứa câu hỏi có những content quá dài (content quá 300 từ
 -- được coi là quá dài) và xóa nó đi
 -- Question 4: Tạo view có chứa danh sách các phòng ban có nhiều nhân viên nhất
+DROP VIEW IF EXISTS view_03;
+CREATE OR REPLACE VIEW view_03 AS
 SELECT position.*
 FROM position
 LEFT JOIN account USING(position_id)
@@ -277,4 +297,16 @@ HAVING COUNT(account_id) = (	SELECT MAX(account_count)
 										FROM position
 										LEFT JOIN account USING(position_id)
 										GROUP BY position_id) AS t);
+                                        
+WITH c3 AS(
+	SELECT position.*,COUNT(account_id) AS account_count
+	FROM position
+	LEFT JOIN account USING(position_id)
+	GROUP BY position_id
+)
+SELECT *
+FROM c3
+WHERE account_count = (	SELECT MAX(account_count)
+							FROM c3);
+
 -- Question 5: Tạo view có chứa tất các các câu hỏi do user họ Nguyễn tạo.
