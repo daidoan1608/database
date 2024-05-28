@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS assignment_05;
-CREATE DATABASE assignment_05;
-USE assignment_05;
+DROP DATABASE IF EXISTS assignment_07;
+CREATE DATABASE assignment_07;
+USE assignment_07;
 
 -- Tạo bảng department
 DROP TABLE IF EXISTS department;
@@ -26,8 +26,8 @@ CREATE TABLE account (
   department_id INT,
   position_id INT,
   created_date DATE ,
-  FOREIGN KEY (department_id) REFERENCES department (department_id),
-  FOREIGN KEY (position_id) REFERENCES position (position_id)
+  FOREIGN KEY (department_id) REFERENCES department (department_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (position_id) REFERENCES position (position_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Tạo bảng group
@@ -37,7 +37,7 @@ CREATE TABLE `group` (
   group_name VARCHAR(50) ,
   creator_id INT,
   created_date DATE DEFAULT (CURRENT_DATE),
-  FOREIGN KEY (creator_id) REFERENCES account (account_id)
+  FOREIGN KEY (creator_id) REFERENCES account (account_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Tạo bảng group_account
@@ -47,8 +47,8 @@ CREATE TABLE group_account (
   account_id INT,
   joined_date DATE DEFAULT (CURRENT_DATE),
   PRIMARY KEY (group_id, account_id),
-  FOREIGN KEY (group_id) REFERENCES `group` (group_id),
-  FOREIGN KEY (account_id) REFERENCES account (account_id)
+  FOREIGN KEY (group_id) REFERENCES `group` (group_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (account_id) REFERENCES account (account_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Tạo bảng type_question
@@ -74,9 +74,9 @@ CREATE TABLE question (
   type_id INT,
   creator_id INT,
   created_date DATE DEFAULT (CURRENT_DATE),
-  FOREIGN KEY (category_id) REFERENCES category_question (category_id),
-  FOREIGN KEY (type_id) REFERENCES type_question (type_id),
-  FOREIGN KEY (creator_id) REFERENCES account (account_id)
+  FOREIGN KEY (category_id) REFERENCES category_question (category_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (type_id) REFERENCES type_question (type_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (creator_id) REFERENCES account (account_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Tạo bảng answer
@@ -99,8 +99,8 @@ CREATE TABLE exam (
   duration INT,
   creator_id INT,
   created_date DATE DEFAULT (CURRENT_DATE),
-  FOREIGN KEY (category_id) REFERENCES category_question (category_id),
-  FOREIGN KEY (creator_id) REFERENCES account (account_id)
+  FOREIGN KEY (category_id) REFERENCES category_question (category_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (creator_id) REFERENCES account (account_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Tạo bảng exam_question
@@ -109,8 +109,8 @@ CREATE TABLE exam_question (
   exam_id INT,
   question_id INT,
   PRIMARY KEY (exam_id, question_id),
-  FOREIGN KEY (exam_id) REFERENCES exam (exam_id),
-  FOREIGN KEY (question_id) REFERENCES question (question_id)
+  FOREIGN KEY (exam_id) REFERENCES exam (exam_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (question_id) REFERENCES question (question_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Thêm dữ liệu cho bảng department
@@ -226,99 +226,70 @@ VALUES    ("VTIQ001", "Đề thi C#"   , 1     , 60   , 3     , "2019-04-05"),
           ("VTIQ008", "Đề thi Python" , 8     , 60   , 8     , "2020-04-07"),
           ("VTIQ009", "Đề thi ADO.NET", 4     , 90   , 3     , "2020-04-07"),
           ("VTIQ010", "Đề thi ASP.NET", 7     , 90   , 10    , "2020-04-08");
-
--- Thêm dữ liệu cho bảng exam_question
-INSERT INTO exam_question  (question_id, exam_id)
-VALUES           (1     , 1   ),
-              (2     , 2   ),
-              (3     , 1   ),
-              (4     , 4   ),
-              (5     , 1   ),
-              (6     , 2   ),
-              (7     , 1   ),
-              (8     , 8   ),
-              (9     , 2   ),
-              (10     , 10 );
--- Question 1: Tạo view có chứa danh sách nhân viên thuộc phòng ban sale
-DROP VIEW IF EXISTS view_01;
-CREATE OR REPLACE VIEW view_01 AS
-SELECT *
-FROM account
-WHERE department_id =(SELECT department_id
-					FROM department
-					WHERE department_name = "Sale");view_01
-                    
--- Cách 2: Dùng CTE
-WITH c1 AS(
-	SELECT department_id
-	FROM department
-	WHERE department_name = "Sale"
-)
-SELECT *
-FROM account
-WHERE department_id = (	SELECT *
-						FROM c1);
-                        
--- Question 2: Tạo view có chứa thông tin các account tham gia vào nhiều group nhất
-DROP VIEW IF EXISTS view_02;
-CREATE OR REPLACE VIEW view_02 AS
-SELECT account.*
-FROM account
-LEFT JOIN group_account USING(account_id)
-GROUP BY account_id
-HAVING COUNT(group_id)= (	SELECT MAX(group_count)
-							FROM	(	SELECT COUNT(group_id) AS group_count
-										FROM account
-										LEFT JOIN group_account USING(account_id)
-										GROUP BY account_id) AS t);
-                                        
--- Cách 2 dùng CTE
-WITH c2 AS(
-	SELECT account.*, COUNT(group_id) AS group_count
-	FROM account
-	LEFT JOIN group_account USING(account_id)
-	GROUP BY account_id
-)
-SELECT *
-FROM c2
-WHERE group_count =	(SELECT MAX(group_count)
-					FROM c2);
--- Question 3: Tạo view có chứa câu hỏi có những content quá dài (content quá 300 từ được coi là quá dài) và xóa nó đi
-CREATE OR REPLACE VIEW view_03 AS
-SELECT *
-FROM question
-WHERE CHAR_LENGTH(content) > 300;
-
-DELETE FROM view_03;
-
--- Question 4: Tạo view có chứa danh sách các phòng ban có nhiều nhân viên nhất
-DROP VIEW IF EXISTS view_04;
-CREATE OR REPLACE VIEW view_04 AS
-SELECT department.*
-FROM department
-LEFT JOIN account USING(department_id)
-GROUP BY department_id
-HAVING COUNT(account_id) = (	SELECT MAX(account_count)
-								FROM(	SELECT COUNT(account_id) AS account_count
-										FROM department
-										LEFT JOIN account USING(department_id)
-										GROUP BY department_id) AS t);
-                                        
-WITH c4 AS(
-	SELECT department.*,COUNT(account_id) AS account_count
-	FROM department
-	LEFT JOIN account USING(department_id)
-	GROUP BY department_id
-)
-SELECT *
-FROM c4
-WHERE account_count = (	SELECT MAX(account_count)
-							FROM c4);
-
--- Question 5: Tạo view có chứa tất các các câu hỏi do user họ Nguyễn tạo.
-CREATE OR REPLACE VIEW view_05 AS
-SELECT *
-FROM question
-WHERE creator_id IN (	SELECT account_id
-						FROM account
-						WHERE full_name LIKE "Nguyễn %");
+-- Question 1: Tạo trigger không cho phép người dùng nhập vào Group có
+-- ngày tạo trước 1 năm trước
+DROP TRIGGER IF EXISTS trigger_01;
+DELIMITER $$
+CREATE TRIGGER trigger_01
+BEFORE INSERT ON `group`
+FOR EACH ROW
+BEGIN
+	IF NEW.created_date < CURRENT_DATE - INTERVAL 1 YEAR THEN
+		SIGNAL SQLSTATE "12345"
+        SET MESSAGE_TEXT = "Không cho tạo group trước 1 năm trước.";
+    END IF;
+END $$
+DELIMITER ;
+-- Question 2: Tạo trigger Không cho phép người dùng thêm bất kỳ user nào
+-- vào department "Sale" nữa, khi thêm thì hiện ra thông báo "Department
+-- "Sale" cannot add more user"
+-- Question 3: Cấu hình 1 group có nhiều nhất là 5 user
+-- Question 3: Cấu hình 1 group có nhiều nhất là 5 user
+DROP TRIGGER IF EXISTS trigger_03;
+DELIMITER $$
+CREATE TRIGGER trigger_03
+BEFORE INSERT ON group_account
+FOR EACH ROW
+BEGIN
+	DECLARE v_account_count INT;
+    
+    SELECT COUNT(account_id) INTO v_account_count
+    FROM group_account
+    WHERE group_id = NEW.group_id;
+    
+    IF v_account_count >= 5 THEN
+		SIGNAL SQLSTATE "12345"
+        SET MESSAGE_TEXT = "Mỗi group có tối đa 5 người.";
+    END IF;
+END $$
+DELIMITER ;
+-- Question 4: Cấu hình 1 bài thi có nhiều nhất là 10 Question
+-- Question 5: Tạo trigger không cho phép người dùng xóa tài khoản có email
+-- là admin@gmail.com (đây là tài khoản admin, không cho phép user xóa),
+-- còn lại các tài khoản khác thì sẽ cho phép xóa và sẽ xóa tất cả các thông
+-- tin liên quan tới user đó
+-- Question 6: Không sử dụng cấu hình default cho field DepartmentID của
+-- table Account, hãy tạo trigger cho phép người dùng khi tạo account không điền
+-- vào departmentID thì sẽ được phân vào phòng ban "waiting Department"
+-- Question 7: Cấu hình 1 bài thi chỉ cho phép user tạo tối đa 4 answers cho
+-- mỗi question, trong đó có tối đa 2 đáp án đúng.
+-- Question 8: Viết trigger sửa lại dữ liệu cho đúng:
+-- Nếu người dùng nhập vào gender của account là nam, nữ, chưa xác định
+-- Thì sẽ đổi lại thành M, F, U cho giống với cấu hình ở database
+-- Question 9: Viết trigger không cho phép người dùng xóa bài thi mới tạo được
+-- 2 ngày
+-- Question 10: Viết trigger chỉ cho phép người dùng chỉ được update, delete
+-- các question khi question đó chưa nằm trong exam nào
+-- Question 12: Lấy ra thông tin exam trong đó:
+-- Duration <= 30 thì sẽ đổi thành giá trị "Short time"
+-- 30 < Duration <= 60 thì sẽ đổi thành giá trị "Medium time"
+-- Duration > 60 thì sẽ đổi thành giá trị "Long time"
+-- Question 13: Thống kê số account trong mỗi group và in ra thêm 1 column
+-- nữa có tên
+-- là the_number_user_amount và mang giá trị được quy định như sau:
+-- Nếu số lượng user trong group =< 5 thì sẽ có giá trị là few
+-- Nếu số lượng user trong group >= 20 và > 5 thì sẽ có giá trị là normal
+-- Nếu số lượng user trong group > 20 thì sẽ có giá trị là higher
+-- Question 14: Thống kê số mỗi phòng ban có bao nhiêu user, nếu phòng ban
+-- nào
+-- không có user thì sẽ thay đổi giá trị 0 thành "Không có User"
