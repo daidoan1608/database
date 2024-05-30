@@ -29,3 +29,13 @@ BEGIN
     END IF;
 END $$
 DELIMITER ;
+SHOW TRIGGERS;
+
+-- CASE WHEN
+SELECT *,
+	CASE
+		WHEN duration <= 45 THEN "Short time"
+        WHEN duration <= 100 THEN "Medium time"
+        ELSE "Long time"
+	END AS duration_type
+FROM exam;

@@ -423,7 +423,7 @@ BEGIN
 
 	SELECT COUNT(*) INTO v_removed_exam
     FROM exam
-    WHERE created_date < CURRENT_DATE - INTERVAL 5 YEAR;
+    WHERE created_date < CURRENT_DATE - INTERVAL 3 YEAR;
     
     SELECT COUNT(*) INTO v_removed_exam_question
     FROM exam_question
